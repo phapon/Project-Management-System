@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Hub & Portfolio</title>
+    <style>
+        :root {
+            --primary: #1a252f;
+            --accent: #3498db;
+            --bg: #f8f9fa;
+            --text: #2c3e50;
+        }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--bg); color: var(--text); }
+        header { background: var(--primary); color: white; padding: 2.5rem 1rem; text-align: center; }
+        .container { max-width: 1100px; margin: 2rem auto; padding: 0 1.5rem; }
+        
+        /* ส่วนตัวกรองหมวดหมู่ */
+        .filter-container { margin-bottom: 2rem; text-align: center; }
+        .filter-btn { 
+            padding: 0.5rem 1.2rem; margin: 0.2rem; border: 1px solid var(--accent);
+            background: white; color: var(--accent); border-radius: 20px; cursor: pointer; font-weight: bold;
+        }
+        .filter-btn.active, .filter-btn:hover { background: var(--accent); color: white; }
+
+        /* การ์ดแสดงโปรเจกต์ */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; }
+        .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .tag { display: inline-block; background: #e8f4fd; color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .tools { font-size: 0.85rem; color: #7f8c8d; margin: 10px 0; }
+        .btn { display: inline-block; padding: 0.5rem 1rem; background: var(--primary); color: white; text-decoration: none; border-radius: 4px; font-size: 0.9rem; margin-top: 10px; }
+        .btn:hover { background: var(--accent); }
+        
+        .loading { text-align: center; font-size: 1.2rem; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>My Personal Projects System</h1>
+        <p>ระบบจัดระเบียบและคลังผลงานโปรเจกต์ส่วนตัว</p>
+    </header>
+
+    <div class="container">
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterProjects('All')">ทั้งหมด</button>
+            <button class="filter-btn" onclick="filterProjects('IoT')">IoT</button>
+            <button class="filter-btn" onclick="filterProjects('Cloud')">Cloud</button>
+            <button class="filter-btn" onclick="filterProjects('Networking')">Networking</button>
+            <button class="filter-btn" onclick="filterProjects('Cybersecurity')">Cybersecurity</button>
+        </div>
+
+        <div id="loading" class="loading">กำลังดึงข้อมูลจากระบบฐานข้อมูล...</div>
+        <div class="grid" id="project-grid"></div>
+    </div>
+
+    <script>
+        // แทรก URL ของ Google Apps Script ที่ได้จากขั้นที่ 2 ตรงนี้
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxGza11R2tL_DxLow_6I8mAtVD9LeM3FIBZZjHRcpPAf_n3lLoTV1vVLA1QIakWKi_6/exec'; 
+        let allProjects = [];
+
+        // ฟังก์ชันดึงข้อมูลจาก Google Sheets
+        async function fetchProjects() {
+            try {
+                const response = await fetch(API_URL);
+                allProjects = await response.json();
+                document.getElementById('loading').style.display = 'none';
+                displayProjects(allProjects);
+            } catch (error) {
+                document.getElementById('loading').innerText = 'ไม่สามารถโหลดข้อมูลระบบได้ กรุณาตรวจสอบการตั้งค่า API';
+                console.error(error);
+            }
+        }
+
+        // ฟังก์ชันแสดงการ์ดผลงาน
+        function displayProjects(projects) {
+            const grid = document.getElementById('project-grid');
+            grid.innerHTML = '';
+            
+            projects.forEach(project => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <span class="tag">${project.category}</span>
+                    <h3 style="margin: 10px 0 5px 0;">${project.title}</h3>
+                    <small style="color:#bdc3c7;">${project.date.split('T')[0] || project.date}</small>
+                    <p style="font-size:0.95rem; line-height:1.4;">${project.description}</p>
+                    <div class="tools"><strong>Tools:</strong> ${project.tools}</div>
+                    ${project.githubLink ? `<a href="${project.githubLink}" target="_blank" class="btn">ดูซอร์สโค้ด / เอกสาร</a>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ฟังก์ชันกรองหมวดหมู่โปรเจกต์
+        function filterProjects(category) {
+            // เปลี่ยนสีปุ่มที่เลือก
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (category === 'All') {
+                displayProjects(allProjects);
+            } else {
+                const filtered = allProjects.filter(p => p.category.toLowerCase() === category.toLowerCase());
+                displayProjects(filtered);
+            }
+        }
+
+        // เริ่มทำงานเมื่อเปิดหน้าเว็บ
+        fetchProjects();
+    </script>
+</body>
+</html>
